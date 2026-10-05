@@ -1,0 +1,219 @@
+[
+  {
+    "key": "enabled",
+    "type": "boolean",
+    "label": "Enable equipment reads",
+    "help": "Off by default. Prepare never connects; only Play in periodic mode or an explicit read opens the connection."
+  },
+  {
+    "key": "protocol",
+    "type": "select",
+    "label": "Protocol",
+    "help": "Changing protocol also requires adapting the point definitions before Apply.",
+    "options": [
+      "modbus_tcp",
+      "opcua"
+    ]
+  },
+  {
+    "key": "start_mode",
+    "type": "select",
+    "label": "Acquisition at Play",
+    "help": "On command waits for read/start. Periodic begins at Play in Active Runtime only.",
+    "options": [
+      "on_command",
+      "periodic"
+    ]
+  },
+  {
+    "key": "endpoint",
+    "type": "text",
+    "label": "Equipment endpoint",
+    "help": "Modbus: tcp://host:502. OPC UA: opc.tcp://host:4840/path. Explicit port, no credentials or discovery."
+  },
+  {
+    "key": "allow_insecure",
+    "type": "boolean",
+    "label": "Allow unencrypted equipment access",
+    "help": "Required for Modbus TCP and OPC UA without security. Use only an explicitly trusted equipment network."
+  },
+  {
+    "key": "unit_id",
+    "type": "integer",
+    "label": "Modbus unit ID",
+    "help": "1–255. Broadcast unit 0 is refused. Register addresses are zero-based offsets.",
+    "min": 1,
+    "max": 255,
+    "when": {
+      "protocol": [
+        "modbus_tcp"
+      ]
+    }
+  },
+  {
+    "key": "opcua_security",
+    "type": "select",
+    "label": "OPC UA security",
+    "help": "Sign and encrypt uses Basic256Sha256 with an exact pinned server certificate. No silent downgrade.",
+    "options": [
+      "sign_encrypt",
+      "none"
+    ],
+    "when": {
+      "protocol": [
+        "opcua"
+      ]
+    }
+  },
+  {
+    "key": "credential_ref",
+    "type": "text",
+    "label": "Client credentials in wallet",
+    "help": "Secure OPC UA: wallet JSON with certificate_pem/private_key_pem and optional username/password. Clear this reference before selecting unencrypted access. Never paste private keys here.",
+    "when": {
+      "protocol": [
+        "opcua"
+      ]
+    }
+  },
+  {
+    "key": "server_certificate_pem",
+    "type": "textarea",
+    "label": "Pinned public server certificate (PEM)",
+    "help": "Paste the exact public certificate, not a private key. Certificate changes require review and a new Run.",
+    "when": {
+      "protocol": [
+        "opcua"
+      ],
+      "opcua_security": [
+        "sign_encrypt"
+      ]
+    },
+    "rows": 5
+  },
+  {
+    "key": "points",
+    "type": "json",
+    "label": "Allowed points (JSON)",
+    "help": "Array: Modbus {\"id\":\"temp\",\"area\":\"holding\",\"address\":0,\"type\":\"uint16\",\"scale\":0.1,\"unit\":\"C\"}; OPC UA {\"id\":\"temp\",\"node_id\":\"ns=2;s=Temp\",\"type\":\"float64\",\"unit\":\"C\"}. At most 64 points.",
+    "rows": 5
+  },
+  {
+    "key": "interval_ms",
+    "type": "integer",
+    "label": "Minimum read interval (ms)",
+    "help": "Bounds periodic and explicit reads; one request at a time, no catch-up burst.",
+    "advanced": true,
+    "min": 250,
+    "max": 3600000
+  },
+  {
+    "key": "connect_timeout_ms",
+    "type": "integer",
+    "label": "Connection deadline (ms)",
+    "help": "A stuck resolver or protocol handshake is terminated in the owned process.",
+    "advanced": true,
+    "min": 500,
+    "max": 30000
+  },
+  {
+    "key": "read_timeout_ms",
+    "type": "integer",
+    "label": "Read deadline (ms)",
+    "help": "Total deadline for all selected points, not a fresh allowance per register.",
+    "advanced": true,
+    "min": 100,
+    "max": 30000
+  },
+  {
+    "key": "stale_after_ms",
+    "type": "integer",
+    "label": "Observation expiry (ms)",
+    "help": "Emit null with stale quality when a point is not successfully refreshed. Stop/disconnect also invalidates observations.",
+    "advanced": true,
+    "min": 250,
+    "max": 86400000
+  },
+  {
+    "key": "reconnect_attempts",
+    "type": "integer",
+    "label": "Automatic reconnect attempts",
+    "help": "Only periodic acquisition retries; finite budget until an explicit start. No hidden SDK retries.",
+    "advanced": true,
+    "min": 0,
+    "max": 10
+  },
+  {
+    "key": "reconnect_delay_ms",
+    "type": "integer",
+    "label": "Reconnect delay (ms)",
+    "help": "Fixed minimum pause between failed connection attempts.",
+    "advanced": true,
+    "min": 250,
+    "max": 60000
+  },
+  {
+    "key": "max_measurements_per_run",
+    "type": "integer",
+    "label": "Maximum batches per Run",
+    "help": "Stop acquisition at the limit. A new Run is required to reset the count.",
+    "advanced": true,
+    "min": 1,
+    "max": 1000000
+  },
+  {
+    "key": "application_uri",
+    "type": "text",
+    "label": "OPC UA client application URI",
+    "help": "Must match a URI in the client certificate SAN; default urn:hackinvent:bloxsmith:industrial-read.",
+    "advanced": true,
+    "when": {
+      "protocol": [
+        "opcua"
+      ],
+      "opcua_security": [
+        "sign_encrypt"
+      ]
+    }
+  },
+  {
+    "key": "source_max_age_ms",
+    "type": "integer",
+    "label": "Maximum OPC UA source age (ms)",
+    "help": "Reject old source timestamps even when a new network response arrives. Adjust for the device’s timestamp semantics.",
+    "advanced": true,
+    "min": 250,
+    "max": 86400000,
+    "when": {
+      "protocol": [
+        "opcua"
+      ]
+    }
+  },
+  {
+    "key": "max_clock_skew_ms",
+    "type": "integer",
+    "label": "Allowed source clock lead (ms)",
+    "help": "A source timestamp too far in the future is unknown, not fresh.",
+    "advanced": true,
+    "min": 0,
+    "max": 60000,
+    "when": {
+      "protocol": [
+        "opcua"
+      ]
+    }
+  },
+  {
+    "key": "require_source_timestamp",
+    "type": "boolean",
+    "label": "Require OPC UA source timestamp",
+    "help": "Missing source time invalidates the value. Modbus has no native sample timestamp and reports its age as unknown.",
+    "advanced": true,
+    "when": {
+      "protocol": [
+        "opcua"
+      ]
+    }
+  }
+]

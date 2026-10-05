@@ -1,0 +1,2 @@
+# Optional for Modbus TCP; required for the OPC UA adapter.
+asyncua==2.0.1
